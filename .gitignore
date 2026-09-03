@@ -1,0 +1,6 @@
+/relay
+/fakeagent
+/loadclient
+/bin/
+*.test
+*.out
