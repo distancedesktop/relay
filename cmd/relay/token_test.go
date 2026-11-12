@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -119,5 +120,21 @@ func TestDialUpstreamPresentsToken(t *testing.T) {
 				t.Fatalf("want 401 to forward, got rsp=%v err=%v", rsp, err)
 			}
 		})
+	}
+}
+
+func TestRouteErrorsHideToken(t *testing.T) {
+	for _, spec := range []string{
+		"/wt=https://agent/wt,token=SECRETSECRET,unknown=x",
+		"/wt=token=SECRETSECRET",
+		"/wt=%zz,token=SECRETSECRET",
+	} {
+		err := newPhonebook().parseRoute(spec)
+		if err == nil {
+			t.Fatalf("parseRoute(%q) accepted a bad spec", spec)
+		}
+		if strings.Contains(err.Error(), "SECRETSECRET") {
+			t.Errorf("route error leaks the token: %v", err)
+		}
 	}
 }

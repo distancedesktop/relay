@@ -43,7 +43,7 @@ func newPhonebook() *phonebook {
 func (p *phonebook) parseRoute(spec string) error {
 	path, rest, ok := strings.Cut(spec, "=")
 	if !ok {
-		return fmt.Errorf("route %q: want path=url[,fingerprint=...][,origin=...][,token=...]", spec)
+		return fmt.Errorf("route: want path=url[,fingerprint=...][,origin=...][,token=...]")
 	}
 	path = normalizePath(path)
 	var up upstream
@@ -65,14 +65,14 @@ func (p *phonebook) parseRoute(spec string) error {
 		case strings.EqualFold(k, "url"):
 			up.URL = v
 		default:
-			return fmt.Errorf("route %q: unknown field %q", spec, field)
+			return fmt.Errorf("route %s: unknown field %q", path, k)
 		}
 	}
 	if up.URL == "" {
-		return fmt.Errorf("route %q: no url", spec)
+		return fmt.Errorf("route %s: no url", path)
 	}
 	if _, err := url.Parse(up.URL); err != nil {
-		return fmt.Errorf("route %q: bad url: %w", spec, err)
+		return fmt.Errorf("route %s: bad url", path)
 	}
 	p.add(path, up)
 	return nil

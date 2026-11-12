@@ -33,7 +33,7 @@ Against a real agent, point `-upstream` at it with its fingerprint and pass an `
 
 ## Viewer token
 
-The agent refuses WebTransport upgrades without its viewer token (`distance-agent --print-token`). By default the relay forwards each viewer's own token upstream as `Authorization: Bearer` — browsers send it as `?token=` on the relay URL, `loadclient` with `-token` — so the relay grants no access the viewer did not already have. Setting a token on a route (`-route /wt/d1=<url>,token=<tok>`, `"token"` in the `-routes` JSON, or `-upstream-token-file`) makes the relay present it for every viewer of that route instead; only do that when the relay itself is access-controlled.
+The agent refuses WebTransport upgrades without its viewer token (`distance-agent --print-token`). By default the relay forwards each viewer's own token upstream as `Authorization: Bearer` — browsers send it as `?token=` on the relay URL, `loadclient` with `-token` (which requires `-pin`) — so the relay grants no access the viewer did not already have. Setting a token on a route (`-route /wt/d1=<url>,token=<tok>`, `"token"` in the `-routes` JSON, or `-upstream-token-file`) makes the relay present it for every viewer of that route instead; only do that when the relay itself is access-controlled.
 
 ## What the browser pins
 
