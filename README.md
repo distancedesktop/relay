@@ -31,6 +31,10 @@ go build ./...
 
 Against a real agent, point `-upstream` at it with its fingerprint and pass an `-upstream-origin` the agent accepts. Keep the 64KB window flags — without them a slow viewer builds a multi-second queue (see `FINDINGS.md`, "The central finding").
 
+## Viewer token
+
+The agent refuses WebTransport upgrades without its viewer token (`distance-agent --print-token`). By default the relay forwards each viewer's own token upstream as `Authorization: Bearer` — browsers send it as `?token=` on the relay URL, `loadclient` with `-token` — so the relay grants no access the viewer did not already have. Setting a token on a route (`-route /wt/d1=<url>,token=<tok>`, `"token"` in the `-routes` JSON, or `-upstream-token-file`) makes the relay present it for every viewer of that route instead; only do that when the relay itself is access-controlled.
+
 ## What the browser pins
 
 Only the relay's certificate. The agent's fingerprint stays server-side in `-upstream-fingerprint`. If the relay serves a publicly trusted cert, browsers need no pin at all.

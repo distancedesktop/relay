@@ -19,6 +19,11 @@ type upstream struct {
 	Fingerprint string `json:"fingerprint,omitempty"`
 	// Origin overrides the relay-wide default Origin for this upstream.
 	Origin string `json:"origin,omitempty"`
+	// Token, if set, is the agent's viewer token, sent upstream as
+	// `Authorization: Bearer`. It lets the relay authorize viewers on the agent's
+	// behalf, so only set it when the relay itself is access-controlled. Unset,
+	// the relay forwards the token the viewer presented.
+	Token string `json:"token,omitempty"`
 }
 
 // phonebook maps a client request path to an upstream agent. In production this
@@ -34,11 +39,11 @@ func newPhonebook() *phonebook {
 	return &phonebook{entries: map[string]upstream{}}
 }
 
-// parseRoutes accepts repeated -route path=url[,fingerprint][,origin=...] values.
+// parseRoutes accepts repeated -route path=url[,fingerprint][,origin=...][,token=...] values.
 func (p *phonebook) parseRoute(spec string) error {
 	path, rest, ok := strings.Cut(spec, "=")
 	if !ok {
-		return fmt.Errorf("route %q: want path=url[,fingerprint=...][,origin=...]", spec)
+		return fmt.Errorf("route %q: want path=url[,fingerprint=...][,origin=...][,token=...]", spec)
 	}
 	path = normalizePath(path)
 	var up upstream
@@ -55,6 +60,8 @@ func (p *phonebook) parseRoute(spec string) error {
 			up.Fingerprint = v
 		case strings.EqualFold(k, "origin"):
 			up.Origin = v
+		case strings.EqualFold(k, "token"):
+			up.Token = v
 		case strings.EqualFold(k, "url"):
 			up.URL = v
 		default:
@@ -135,6 +142,9 @@ func (p *phonebook) describe() string {
 		}
 		if up.Origin != "" {
 			fmt.Fprintf(&b, " origin=%s", up.Origin)
+		}
+		if up.Token != "" {
+			b.WriteString(" token=<set>")
 		}
 	}
 	return b.String()

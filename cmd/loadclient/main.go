@@ -46,6 +46,7 @@ func main() {
 		url         = flag.String("url", "https://127.0.0.1:53080/wt", "WebTransport URL (agent directly, or the relay)")
 		pin         = flag.String("pin", "", "expected server cert SHA-256; empty means skip verification entirely")
 		origin      = flag.String("origin", "", "Origin header to send")
+		token       = flag.String("token", "", "agent viewer token, sent as Authorization: Bearer")
 		duration    = flag.Duration("duration", 10*time.Second, "how long to read video after start")
 		readRate    = flag.Int("read-rate", 0, "throttle video reads to this many bytes/sec (0 = read as fast as possible)")
 		readChunk   = flag.Int("read-chunk", 32*1024, "read buffer size")
@@ -63,6 +64,7 @@ func main() {
 		url:         *url,
 		pin:         *pin,
 		origin:      *origin,
+		token:       *token,
 		duration:    *duration,
 		readRate:    *readRate,
 		readChunk:   *readChunk,
@@ -92,6 +94,7 @@ type runConfig struct {
 	url         string
 	pin         string
 	origin      string
+	token       string
 	duration    time.Duration
 	readRate    int
 	readChunk   int
@@ -246,6 +249,9 @@ func run(cfg runConfig) (*Report, error) {
 	hdr := http.Header{}
 	if cfg.origin != "" {
 		hdr.Set("Origin", cfg.origin)
+	}
+	if cfg.token != "" {
+		hdr.Set("Authorization", "Bearer "+cfg.token)
 	}
 
 	dialCtx, cancelDial := context.WithTimeout(context.Background(), cfg.connTimeout)
