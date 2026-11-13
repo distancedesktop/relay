@@ -107,10 +107,10 @@ func main() {
 		upTimeout    = flag.Duration("upstream-timeout", 10*time.Second, "upstream dial timeout")
 		insecureUp   = flag.Bool("insecure-upstream", false, "accept any upstream cert when no fingerprint is configured")
 		statsEvery   = flag.Duration("stats", 5*time.Second, "how often to log per-session splice stats; 0 disables")
-		streamWindow = flag.Uint64("stream-window", 0, "override InitialStreamReceiveWindow on both legs (0 = quic-go default 512 KB)")
-		connWindow   = flag.Uint64("conn-window", 0, "override InitialConnectionReceiveWindow on both legs (0 = quic-go default 768 KB)")
-		maxStreamWin = flag.Uint64("max-stream-window", 0, "override MaxStreamReceiveWindow on both legs (0 = quic-go default 6 MB)")
-		maxConnWin   = flag.Uint64("max-conn-window", 0, "override MaxConnectionReceiveWindow on both legs (0 = quic-go default 15 MB)")
+		streamWindow = flag.Uint64("stream-window", 64*1024, "InitialStreamReceiveWindow on both legs (0 = quic-go default 512 KB)")
+		connWindow   = flag.Uint64("conn-window", 128*1024, "InitialConnectionReceiveWindow on both legs (0 = quic-go default 768 KB)")
+		maxStreamWin = flag.Uint64("max-stream-window", 64*1024, "MaxStreamReceiveWindow on both legs (0 = quic-go default 6 MB)")
+		maxConnWin   = flag.Uint64("max-conn-window", 128*1024, "MaxConnectionReceiveWindow on both legs (0 = quic-go default 15 MB)")
 		maxIdle      = flag.Duration("max-idle", 30*time.Second, "QUIC MaxIdleTimeout on both legs; this is the upper bound on how long a vanished client holds its upstream session open")
 	)
 	book := newPhonebook()
@@ -152,9 +152,11 @@ func main() {
 		// aborts while the relay is blocked writing video down to it, the abort is not
 		// what ends the upstream leg — this timer is. See FINDINGS.md.
 		MaxIdleTimeout: *maxIdle,
-		// Windows left at quic-go defaults unless overridden: 512 KB initial stream,
-		// 6 MB max stream, 768 KB initial conn, 15 MB max conn. The defaults are what
-		// a real deployment would run, so they are what the measurement should use.
+		// Windows default to 64 KB stream / 128 KB conn, initial and max alike, not
+		// quic-go's 512 KB / 6 MB / 768 KB / 15 MB: with those a slow viewer builds a
+		// multi-second queue in the relay (FINDINGS.md, "The central finding"). The max
+		// must be pinned too, or quic-go auto-tunes straight back up under load.
+		// Passing 0 for a flag restores the quic-go default for that window.
 		//
 		// These matter more on the relay than anywhere else. On the upstream leg the
 		// relay is the receiver, so its own receive window is precisely the amount of

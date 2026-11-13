@@ -84,7 +84,7 @@ for rep in 1 2; do
     UPTARGET="$AGENT_ADDR"
   fi
   RELAY_LOG="$OUT/relay-e12-$PFX-$rep.log"; rm -f "$RELAY_LOG"
-  "$BIN/relay" -listen "$RELAY_ADDR" -route "/wt=https://$UPTARGET/wt,fingerprint=$AGENT_FP" -stats 5s \
+  "$BIN/relay" -listen "$RELAY_ADDR" -route "/wt=https://$UPTARGET/wt,fingerprint=$AGENT_FP" -stats 5s $QUICGO_WINDOWS \
     > "$RELAY_LOG" 2>&1 &
   RELAY_PID=$!
   for w in $(seq 1 100); do

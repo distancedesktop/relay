@@ -74,7 +74,7 @@ for rep in 1 2; do
   start_agent "e12b-$PFX-r$rep" -stats 1s -stall-log 2s -bitrate "$BR" -fps 60
   if [ "$RTT" != "0" ]; then start_proxy "$P2" "$AGENT_ADDR" "$QTR" "u$rep"; UPT="$P2"; else UPT="$AGENT_ADDR"; fi
   RELAY_LOG="$OUT/relay-e12b-$PFX-$rep.log"; rm -f "$RELAY_LOG"
-  "$BIN/relay" -listen "$RELAY_ADDR" -route "/wt=https://$UPT/wt,fingerprint=$AGENT_FP" -stats 5s -stall-threshold 2s > "$RELAY_LOG" 2>&1 &
+  "$BIN/relay" -listen "$RELAY_ADDR" -route "/wt=https://$UPT/wt,fingerprint=$AGENT_FP" -stats 5s -stall-threshold 2s $QUICGO_WINDOWS > "$RELAY_LOG" 2>&1 &
   RELAY_PID=$!
   for w in $(seq 1 100); do
     RELAY_FP=$(awk '/cert SHA-256/{print $NF}' "$RELAY_LOG" 2>/dev/null); [ -n "$RELAY_FP" ] && break; sleep 0.05

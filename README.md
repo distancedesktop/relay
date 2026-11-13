@@ -23,13 +23,11 @@ go build ./...
 ./fakeagent -listen 127.0.0.1:53180 &
 ./relay -listen 127.0.0.1:53190 \
   -upstream https://127.0.0.1:53180/wt \
-  -upstream-fingerprint <fakeagent-fp> \
-  -stream-window 65536 -max-stream-window 65536 \
-  -conn-window 131072 -max-conn-window 131072 &
+  -upstream-fingerprint <fakeagent-fp> &
 ./loadclient -url https://127.0.0.1:53190/wt -pin <relay-fp> -duration 10s
 ```
 
-Against a real agent, point `-upstream` at it with its fingerprint and pass an `-upstream-origin` the agent accepts. Keep the 64KB window flags — without them a slow viewer builds a multi-second queue (see `FINDINGS.md`, "The central finding").
+Against a real agent, point `-upstream` at it with its fingerprint and pass an `-upstream-origin` the agent accepts. The flow-control windows default to 64 KB per stream and 128 KB per connection (initial and max) on both legs. Don't raise them, and don't pass `0` (quic-go's 512 KB / 6 MB defaults): a slow viewer then builds a multi-second queue (see `FINDINGS.md`, "The central finding").
 
 ## What the browser pins
 

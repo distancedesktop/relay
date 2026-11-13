@@ -37,11 +37,11 @@ for i in 1 2; do
 done
 kill_proxies
 
-for cfg in "default:" \
+for cfg in "default:$QUICGO_WINDOWS" \
            "w64k:-stream-window 65536 -max-stream-window 65536 -conn-window 131072 -max-conn-window 131072" \
            "w16k:-stream-window 16384 -max-stream-window 16384 -conn-window 32768 -max-conn-window 32768"; do
   name="${cfg%%:*}"; flags="${cfg#*:}"
-  echo "--- RELAYED over ${TOTAL_RTT}ms RTT, relay windows: ${name} (${flags:-quic-go defaults}) ---"
+  echo "--- RELAYED over ${TOTAL_RTT}ms RTT, relay windows: ${name} (${flags}) ---"
   start_proxy "$P2" "$AGENT_ADDR" "$QTR" "e7b-u-$name"
   RELAY_LOG="$OUT/relay-e7b-$name.log"; rm -f "$RELAY_LOG"
   # shellcheck disable=SC2086

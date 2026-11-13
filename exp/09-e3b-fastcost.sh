@@ -33,8 +33,9 @@ for BR in 2000000 50000000; do
       -label "fast-direct-$i" -json > "$OUT/e3b-direct-$BR-$i.json" 2>&1
     sumline "$OUT/e3b-direct-$BR-$i.json"
   done
-  echo "--- relay, default windows ---"
-  run_case "def-$BR"
+  echo "--- relay, quic-go default windows ---"
+  # shellcheck disable=SC2086
+  run_case "def-$BR" $QUICGO_WINDOWS
   echo "--- relay, 64 KB stream window ---"
   run_case "w64k-$BR" -stream-window 65536 -max-stream-window 65536 -conn-window 131072 -max-conn-window 131072
   echo "--- relay, 16 KB stream window ---"
