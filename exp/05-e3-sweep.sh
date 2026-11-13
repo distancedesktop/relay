@@ -33,7 +33,8 @@ run_cfg() { # $1=name $2=duration ; rest = relay flags
 }
 
 echo "########## RELAY, quic-go DEFAULT windows (512K stream / 768K conn / 6M max) ##########"
-run_cfg default 60s
+# shellcheck disable=SC2086
+run_cfg default 60s $QUICGO_WINDOWS
 echo "########## RELAY, 64 KB stream window ##########"
 run_cfg w64k 60s -stream-window 65536 -max-stream-window 65536 -conn-window 131072
 echo "########## RELAY, 16 KB stream window ##########"

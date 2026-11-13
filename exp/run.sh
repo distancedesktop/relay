@@ -50,7 +50,8 @@ case "${1:-}" in
     stop_all
     start_agent
     echo "$AGENT_FP" >"$OUT/agent.fp"
-    start_relay "$RELAY_PORT" "$OUT/relay-default.log"
+    start_relay "$RELAY_PORT" "$OUT/relay-default.log" \
+      -stream-window 0 -max-stream-window 0 -conn-window 0 -max-conn-window 0
     echo "$RELAY_FP" >"$OUT/relay-default.fp"
     start_relay "$RELAY_SMALL_PORT" "$OUT/relay-64k.log" \
       -stream-window 65536 -max-stream-window 65536 -conn-window 131072 -max-conn-window 131072

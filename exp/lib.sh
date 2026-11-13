@@ -16,6 +16,10 @@ AGENT_PID=""
 RELAY_PID=""
 RELAY2_PID=""
 
+# The relay now defaults to 64 KB/128 KB windows; pass these to get the quic-go
+# defaults the "default" baselines below were measured with.
+QUICGO_WINDOWS="-stream-window 0 -max-stream-window 0 -conn-window 0 -max-conn-window 0"
+
 start_agent() { # $1=tag, rest=extra flags
   local tag="$1"; shift
   AGENT_LOG="$OUT/agent-$tag.log"
