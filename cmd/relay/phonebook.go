@@ -65,7 +65,7 @@ func (p *phonebook) parseRoute(spec string) error {
 		case strings.EqualFold(k, "url"):
 			up.URL = v
 		default:
-			return fmt.Errorf("route %s: unknown field %q", path, k)
+			return fmt.Errorf("route %s: unknown field", path)
 		}
 	}
 	if up.URL == "" {

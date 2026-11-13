@@ -128,6 +128,7 @@ func TestDialUpstreamPresentsToken(t *testing.T) {
 func TestRouteErrorsHideToken(t *testing.T) {
 	for _, spec := range []string{
 		"/wt=https://agent/wt,token=SECRETSECRET,unknown=x",
+		"/wt=https://agent/wt,token SECRETSECRET",
 		"/wt=token=SECRETSECRET",
 		"/wt=%zz,token=SECRETSECRET",
 	} {
