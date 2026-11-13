@@ -46,8 +46,8 @@ func main() {
 		url         = flag.String("url", "https://127.0.0.1:53080/wt", "WebTransport URL (agent directly, or the relay)")
 		pin         = flag.String("pin", "", "expected server cert SHA-256; empty means skip verification entirely")
 		origin      = flag.String("origin", "", "Origin header to send")
-		token       = flag.String("token", "", "agent viewer token, sent as Authorization: Bearer (requires -pin)")
-		unsafeToken = flag.Bool("unsafe-token-without-pin", false, "allow -token without -pin (sends the token to an unverified server; isolated tests only)")
+		tokenFile   = flag.String("token-file", "", "file holding the agent viewer token, sent as Authorization: Bearer (requires -pin)")
+		unsafeToken = flag.Bool("unsafe-token-without-pin", false, "allow -token-file without -pin (sends the token to an unverified server; isolated tests only)")
 		duration    = flag.Duration("duration", 10*time.Second, "how long to read video after start")
 		readRate    = flag.Int("read-rate", 0, "throttle video reads to this many bytes/sec (0 = read as fast as possible)")
 		readChunk   = flag.Int("read-chunk", 32*1024, "read buffer size")
@@ -60,16 +60,25 @@ func main() {
 		connTimeout = flag.Duration("connect-timeout", 10*time.Second, "dial timeout")
 	)
 	flag.Parse()
-	if *token != "" && *pin == "" && !*unsafeToken {
-		fmt.Fprintln(os.Stderr, "loadclient: -token requires -pin so the token is not sent to an unverified server (or pass -unsafe-token-without-pin)")
-		os.Exit(2)
+	var token string
+	if *tokenFile != "" {
+		if *pin == "" && !*unsafeToken {
+			fmt.Fprintln(os.Stderr, "loadclient: -token-file requires -pin so the token is not sent to an unverified server (or pass -unsafe-token-without-pin)")
+			os.Exit(2)
+		}
+		b, err := os.ReadFile(*tokenFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "loadclient: %v\n", err)
+			os.Exit(2)
+		}
+		token = strings.TrimSpace(string(b))
 	}
 
 	r, err := run(runConfig{
 		url:         *url,
 		pin:         *pin,
 		origin:      *origin,
-		token:       *token,
+		token:       token,
 		duration:    *duration,
 		readRate:    *readRate,
 		readChunk:   *readChunk,
