@@ -98,6 +98,7 @@ func main() {
 		routesFile   = flag.String("routes", "", "JSON phonebook file: {\"/wt/desktop-1\": {\"url\": \"...\", \"fingerprint\": \"...\"}}")
 		defaultUp    = flag.String("upstream", "", "shorthand for -route /wt=<url>")
 		defaultFP    = flag.String("upstream-fingerprint", "", "expected SHA-256 of the -upstream cert")
+		defaultTok   = flag.String("upstream-token-file", "", "file holding the -upstream agent's viewer token; unset forwards each viewer's own token")
 		certFile     = flag.String("cert", "", "TLS certificate for the client-facing side; empty means self-signed")
 		keyFile      = flag.String("key", "", "TLS key matching -cert")
 		origin       = flag.String("upstream-origin", "", "Origin header to send upstream (default: https://<upstream host>)")
@@ -114,8 +115,12 @@ func main() {
 		maxIdle      = flag.Duration("max-idle", 30*time.Second, "QUIC MaxIdleTimeout on both legs; this is the upper bound on how long a vanished client holds its upstream session open")
 	)
 	book := newPhonebook()
-	flag.Var(routeFlag{book: book}, "route", "path=url[,fingerprint=...][,origin=...]; repeatable")
+	routes := &routeFlag{book: book}
+	flag.Var(routes, "route", "path=url[,fingerprint=...][,origin=...][,token=...]; repeatable")
 	flag.Parse()
+	if routes.err != nil {
+		log.Fatalf("relay: %v", routes.err)
+	}
 
 	if *defaultUp != "" {
 		spec := "/wt=" + *defaultUp
@@ -124,6 +129,15 @@ func main() {
 		}
 		if err := book.parseRoute(spec); err != nil {
 			log.Fatalf("relay: %v", err)
+		}
+		if *defaultTok != "" {
+			b, err := os.ReadFile(*defaultTok)
+			if err != nil {
+				log.Fatalf("relay: %v", err)
+			}
+			up, _ := book.lookup("/wt")
+			up.Token = strings.TrimSpace(string(b))
+			book.add("/wt", up)
 		}
 	}
 	if *routesFile != "" {
@@ -441,6 +455,9 @@ func (r *relay) dialUpstream(ctx context.Context, target upstream, req *http.Req
 	if o := r.upstreamOriginFor(target); o != "" {
 		hdr.Set("Origin", o)
 	}
+	if t := upstreamTokenFor(target, req); t != "" {
+		hdr.Set("Authorization", "Bearer "+t)
+	}
 
 	rsp, sess, err := d.Dial(ctx, target.URL, hdr)
 	fp, _ := seen.Load().(string)
@@ -449,6 +466,24 @@ func (r *relay) dialUpstream(ctx context.Context, target upstream, req *http.Req
 		return nil, nil, fp, rsp, err
 	}
 	return sess, d, fp, rsp, nil
+}
+
+// upstreamTokenFor picks the viewer token to present to the agent, which refuses
+// upgrades without one: the route's configured token, else whatever the viewer
+// sent the relay (browsers can only use the `token` query parameter; other
+// clients may send `Authorization: Bearer`). The relay never invents access, so
+// with no route token a viewer without a valid token is refused by the agent.
+func upstreamTokenFor(target upstream, req *http.Request) string {
+	if target.Token != "" {
+		return target.Token
+	}
+	if t := req.URL.Query().Get("token"); t != "" {
+		return t
+	}
+	if h := req.Header.Get("Authorization"); len(h) > 7 && strings.EqualFold(h[:7], "bearer ") {
+		return strings.TrimSpace(h[7:])
+	}
+	return ""
 }
 
 // upstreamOriginFor picks the Origin to present to the agent. The agent accepts an
