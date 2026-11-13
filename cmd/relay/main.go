@@ -115,8 +115,12 @@ func main() {
 		maxIdle      = flag.Duration("max-idle", 30*time.Second, "QUIC MaxIdleTimeout on both legs; this is the upper bound on how long a vanished client holds its upstream session open")
 	)
 	book := newPhonebook()
-	flag.Var(routeFlag{book: book}, "route", "path=url[,fingerprint=...][,origin=...]; repeatable")
+	routes := &routeFlag{book: book}
+	flag.Var(routes, "route", "path=url[,fingerprint=...][,origin=...][,token=...]; repeatable")
 	flag.Parse()
+	if routes.err != nil {
+		log.Fatalf("relay: %v", routes.err)
+	}
 
 	if *defaultUp != "" {
 		spec := "/wt=" + *defaultUp

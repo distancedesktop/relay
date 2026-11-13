@@ -177,9 +177,19 @@ func firstN(s string, n int) string {
 	return s[:n]
 }
 
-// routeFlag collects repeated -route values.
-type routeFlag struct{ book *phonebook }
+// routeFlag collects repeated -route values. A bad value is held in err
+// rather than returned, because the flag package echoes a rejected value in
+// its error and a route can carry a token.
+type routeFlag struct {
+	book *phonebook
+	err  error
+}
 
-func (r routeFlag) String() string { return "" }
+func (r *routeFlag) String() string { return "" }
 
-func (r routeFlag) Set(v string) error { return r.book.parseRoute(v) }
+func (r *routeFlag) Set(v string) error {
+	if err := r.book.parseRoute(v); err != nil && r.err == nil {
+		r.err = err
+	}
+	return nil
+}

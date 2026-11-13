@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"flag"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -135,6 +137,23 @@ func TestRouteErrorsHideToken(t *testing.T) {
 		}
 		if strings.Contains(err.Error(), "SECRETSECRET") {
 			t.Errorf("route error leaks the token: %v", err)
+		}
+	}
+}
+
+func TestRouteFlagHidesToken(t *testing.T) {
+	var out strings.Builder
+	fs := flag.NewFlagSet("relay", flag.ContinueOnError)
+	fs.SetOutput(&out)
+	routes := &routeFlag{book: newPhonebook()}
+	fs.Var(routes, "route", "")
+	err := fs.Parse([]string{"-route", "/wt=https://agent/wt,token=SECRETSECRET,unknown=x"})
+	if err == nil && routes.err == nil {
+		t.Fatal("bad -route accepted")
+	}
+	for _, s := range []string{out.String(), fmt.Sprint(err), fmt.Sprint(routes.err)} {
+		if strings.Contains(s, "SECRETSECRET") {
+			t.Errorf("-route error leaks the token: %s", s)
 		}
 	}
 }
